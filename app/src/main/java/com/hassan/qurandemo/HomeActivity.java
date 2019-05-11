@@ -8,8 +8,13 @@ import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
+import org.greenrobot.greendao.query.QueryBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,8 +31,26 @@ public class HomeActivity extends AppCompatActivity implements SuarsRecyclerAdap
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        setSupportActionBar((Toolbar) findViewById(R.id.appbar));
+        getSupportActionBar().setTitle("سور القرآن");
 
         RecyclerView recyclerView = findViewById(R.id.recycler);
+
+        SearchView searchView = findViewById(R.id.searchview);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                List<Surah> surahs = ((App) getApplication()).getDaoSession().getSurahDao().queryBuilder().where(SurahDao.Properties.SurahName.like("%" + s + "%")).list();
+                fetchFromDatabase(surahs);
+                return false;
+            }
+        });
+
         adapter = new SuarsRecyclerAdapter(list);
         adapter.setOnSurahClickListener(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -37,17 +60,17 @@ public class HomeActivity extends AppCompatActivity implements SuarsRecyclerAdap
         if (firstStart) {
             initDatabase();
             PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean("first_start", false).apply();
-        }else{
-            fetchFromDatabase();
+        } else {
+            fetchFromDatabase(((App) getApplication()).getDaoSession().getSurahDao().loadAll());
         }
     }
 
-    private void fetchFromDatabase(){
-        List<Surah> surahs = ((App) getApplication()).getDaoSession().getSurahDao().loadAll();
+    private void fetchFromDatabase(List<Surah> surahs) {
         list.clear();
         list.addAll(surahs);
         adapter.notifyDataSetChanged();
     }
+
     private void initDatabase() {
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("جاري تحضير سور القرآن الكريم");
@@ -81,7 +104,7 @@ public class HomeActivity extends AppCompatActivity implements SuarsRecyclerAdap
                                 progressDialog.incrementProgressBy(1);
                                 if (progressDialog.getProgress() == 114) {
                                     progressDialog.dismiss();
-                                    fetchFromDatabase();
+                                    fetchFromDatabase(((App) getApplication()).getDaoSession().getSurahDao().loadAll());
                                 }
                             }
                         });
@@ -95,8 +118,8 @@ public class HomeActivity extends AppCompatActivity implements SuarsRecyclerAdap
 
     @Override
     public void onClick(Surah surah) {
-        Intent intent = new Intent(this,ReadActivity.class);
-        intent.putExtra("id",surah.getId());
+        Intent intent = new Intent(this, ReadActivity.class);
+        intent.putExtra("id", surah.getId());
         startActivity(intent);
     }
 }

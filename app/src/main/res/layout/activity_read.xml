@@ -5,6 +5,11 @@
     android:layoutDirection="rtl"
     android:orientation="vertical"
     android:padding="10dp">
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
+        android:id="@+id/appbar"
+        android:background="@color/colorPrimary"
+        android:layout_height="wrap_content" />
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
